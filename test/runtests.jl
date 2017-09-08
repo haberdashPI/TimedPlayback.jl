@@ -1,5 +1,5 @@
 using TimedPlayback
 using Base.Test
 
-# write your own tests here
-@test 1 == 2
+include("test_sound_construction.jl")
+include("test_stream_construction.jl")
