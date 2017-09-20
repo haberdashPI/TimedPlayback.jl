@@ -15,8 +15,8 @@ end
 
 const default_sample_rate = 44100Hz
 
-abstract struct Hooks end
-struct DefaultHooks end
+abstract type Hooks end
+struct DefaultHooks <: Hooks end
 
 mutable struct SoundSetupState
   samplerate::Freq{Int}
@@ -27,10 +27,11 @@ mutable struct SoundSetupState
   stream_unit::Int
   hooks::Hooks
 end
-  
+
 const default_stream_unit = 2^12
 const sound_setup_state =
-  SoundSetupState(0Hz,LRU{UInt,Sound}(1),C_NULL,0,0,default_stream_unit)
+    SoundSetupState(0Hz,LRU{UInt,Sound}(1),C_NULL,0,0,default_stream_unit,
+                    DefaultHooks())
 isready(s::SoundSetupState) = s.samplerate != 0Hz
 
 """
@@ -78,7 +79,7 @@ end
 """
     setup_sound(;[sample_rate=samplerate()],[num_channels=8],[queue_size=8],
                 [stream_unit=2^11],
-                [hooks::TimedPlayback.Hooks=TimedPlayback.DefaultHooks)
+                [hooks=TimedPlayback.DefaultHooks()
 
 Initialize format and capacity of audio playback.
 
@@ -122,7 +123,9 @@ the latency of streams will increase as the stream unit increases.
 """
 function setup_sound(;sample_rate=samplerate(),
                      buffer_size=nothing,queue_size=8,num_channels=8,
-                     stream_unit=default_stream_unit)
+                     stream_unit=default_stream_unit,
+                     hoooks=DefaultHooks())
+  sound_setup_state.hooks = hooks
   sample_rate_Hz = inHz(Int,sample_rate)
   empty!(sound_cache)
 

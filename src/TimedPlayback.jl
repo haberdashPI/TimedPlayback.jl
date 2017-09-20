@@ -10,10 +10,13 @@ else
         "Please run\nPkg.build(\"TimedPlayback\")")
 end
 
+include(joinpath(dirname(@__FILE__),"units.jl"))
 include(joinpath(dirname(@__FILE__),"timing.jl"))
 include(joinpath(dirname(@__FILE__),"sound.jl"))
 include(joinpath(dirname(@__FILE__),"stream.jl"))
 include(joinpath(dirname(@__FILE__),"playback.jl"))
+
+include(joinpath(dirname(@__FILE__),"audio.jl"))
 
 const localunits = Unitful.basefactors
 const localpromotion = Unitful.promotion

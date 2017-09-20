@@ -1,4 +1,5 @@
-using Weber
+using TimedPlayback
+using Lazy: @>, @_
 using Base.Test
 
 rng() = MersenneTwister(1983)

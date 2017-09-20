@@ -1,4 +1,5 @@
-using TimedSounds
+using TimedPlayback
+using Lazy: @>
 using Base.Test
 
 x = leftright(ramp(tone(1kHz,1s)),ramp(tone(1kHz,1s)))
