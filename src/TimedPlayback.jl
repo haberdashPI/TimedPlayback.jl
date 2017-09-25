@@ -1,6 +1,9 @@
 module TimedPlayback
 
+using Lazy: @>, @_
 using Unitful
+
+export @>, @_
 
 depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
 if isfile(depsjl)
@@ -9,6 +12,9 @@ else
   error("TimedPlayback not properly installed. "*
         "Please run\nPkg.build(\"TimedPlayback\")")
 end
+
+const sound_is_setup = Array{Bool}()
+sound_is_setup[] = false
 
 include(joinpath(dirname(@__FILE__),"units.jl"))
 include(joinpath(dirname(@__FILE__),"timing.jl"))
@@ -25,4 +31,4 @@ function __init__()
   merge!(Unitful.promotion, localpromotion)
 end
 
-end 
+end

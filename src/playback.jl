@@ -1,6 +1,6 @@
 using LRUCache
 export play, stream, stop, setup_sound, current_sound_latency, resume_sounds,
-  pause_sounds
+  pause_sounds, tick
 
 const weber_sound_version = 3
 
@@ -62,6 +62,9 @@ function register_sound(current::Sound,done_at::Float64,wait=sound_cleanup_wait)
   setstate.playing[object_id(current)] = current
 end
 
+show_latency_warnings() = show_latency_warnings(sound_setup_state.hooks)
+show_latency_warnings(::Hooks) = false
+
 function ws_if_error(msg)
   if sound_setup_state.state != C_NULL
     str = unsafe_string(ccall((:ws_error_str,weber_sound),Cstring,
@@ -71,7 +74,7 @@ function ws_if_error(msg)
     str = unsafe_string(ccall((:ws_warn_str,weber_sound),Cstring,
                               (Ptr{Void},),sound_setup_state.state))
     if !isempty(str) && show_latency_warnings()
-      warn(msg*" - "*str*moment_trace_string())
+      warn(msg*" - "*str)
     end
   end
 end
@@ -118,13 +121,28 @@ the latency of streams will increase as the stream unit increases.
 
 # Playback Hooks
 
-**TODO**
+There are a number of hooks into the playback mechanism
+which you can use to customize playback. To do so, define a
+child of the type `TimedPlayback.Hooks` and define as many of the following
+methods on this type as you wish. All methods have default fallbacks.
 
+* `show_latency_warnings(hooks)` - true if you wish warnings about slow
+playback latency to be displayed. (Default is `false`)
+* `on_high_latency(hooks,latency)` - called following a high latency warning;
+  specified the latency of playback. (Default does nothing)
+* `on_play(hooks)` - called each `play` is called (Default does nothing)
+* `tick` - returns the current time in seconds since epochs (Default uses
+  `TimedPlayback.precise_time()`)
+* `on_no_timing(hooks)` - called when there is no timing specified during
+   `play`. (Default does nothing)
+* `get_streamers` - returns a dictionary of channel numbers to streamers. See
+   documentation for `Streamer`. Currently undocumented.
+   (Default manages streamers internally)
 """
 function setup_sound(;sample_rate=samplerate(),
                      buffer_size=nothing,queue_size=8,num_channels=8,
                      stream_unit=default_stream_unit,
-                     hoooks=DefaultHooks())
+                     hooks=DefaultHooks())
   sound_setup_state.hooks = hooks
   sample_rate_Hz = inHz(Int,sample_rate)
   empty!(sound_cache)
@@ -135,8 +153,8 @@ function setup_sound(;sample_rate=samplerate(),
     ccall((:ws_free,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
   else
 
-    if !weber_sound_is_setup[]
-      weber_sound_is_setup[] = true
+    if !sound_is_setup[]
+      sound_is_setup[] = true
       atexit() do
         sleep(0.1)
         ccall((:ws_close,weber_sound),Void,
@@ -215,7 +233,7 @@ function play(x;time=0.0s,channel=0)
   on_play(sound_setup_state.hooks)
   play_(playable(x),ustrip(inseconds(time,samplerate(x))),channel)
 end
-on_play(::DefaultHooks) = nothing
+on_play(::Hooks) = nothing
 
 immutable WS_Sound
   buffer::Ptr{Void}
@@ -223,7 +241,28 @@ immutable WS_Sound
 end
 WS_Sound{R}(x::Sound{R,Q0f15,2}) = WS_Sound(pointer(x.data),size(x,1))
 
-tick(::DefaultHooks) = precise_time()
+tick(::Hooks) = precise_time()
+tick(x::SoundSetupState) = tick(x.hooks)
+tick() = tick(sound_setup_state)
+
+"""
+    at(offset)
+
+Returns a precise time since epoch (in seconds) plus some offset.
+
+Use this method to help specify exactly when a given sound should be played. You
+can subsently add aditional offsets via
+[`Unitful`](https://github.com/ajkeller34/Unitful.jl) values, e.g.
+
+    sound1_time = at(10s) # 10 seconds from now
+    sound2_time = sound1_time + 200ms # 10.2 seconds from now
+
+In addition to adding a specificied onset, This differs from [`Base.time`](@ref)
+in that it is generally more precise on windows machines (as of Julia v0.6), and
+in that it makes use of the `Unitful` seconds type.
+
+"""
+at(time) = time + s*tick()
 
 function play_{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
   if R != ustrip(samplerate())
@@ -239,17 +278,15 @@ function play_{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
   # first, verify the sound can be played when we want to
   if time > 0.0
     latency = current_sound_latency()
-    now = tick(sound_setup_state.hooks)
+    now = tick()
     if now + latency > time && show_latency_warnings()
       if latency > 0
         warn("Requested timing of sound cannot be achieved. ",
              "With your hardware you cannot request the playback of a sound ",
-             "< $(round(1000*latency,2))ms before it begins.",
-             moment_trace_string())
+             "< $(round(1000*latency,2))ms before it begins.")
       else
         warn("Requested timing of sound cannot be achieved. ",
-             "Give more time for the sound to be played.",
-             moment_trace_string())
+             "Give more time for the sound to be played.")
       end
       on_high_latency(sound_setup_state.hooks,(now + latency) - time)
     end
@@ -260,16 +297,17 @@ function play_{R}(x::Sound{R,Q0f15,2},time::Float64=0.0,channel::Int=0)
   # play the sound
   channel = ccall((:ws_play,weber_sound),Cint,
                   (Cdouble,Cdouble,Cint,Ref{WS_Sound},Ptr{Void}),
-                  Weber.tick(),time,channel-1,WS_Sound(x),
+                  tick(),time,channel-1,WS_Sound(x),
                   sound_setup_state.state) + 1
   ws_if_error("While playing sound")
-  register_sound(x,(time > 0.0 ? time : Weber.tick()) + ustrip(duration(x)))
+  register_sound(x,(time > 0.0 ? time : tick()) +
+                 ustrip(duration(x)))
 
   channel
 end
 
-on_high_latency(::DefaultHooks,latency) = nothing
-on_no_timing(::DefaultHooks) = nothing
+on_high_latency(::Hooks,latency) = nothing
+on_no_timing(::Hooks) = nothing
 
 """
     play(fn::Function)
@@ -280,7 +318,12 @@ function play(fn::Function;keys...)
   play(fn();keys...)
 end
 
-type Streamer
+"""
+    Streamer
+
+TODO: document streamer implementation
+"""
+mutable struct Streamer
   next_stream::Float64
   channel::Int
   stream::AbstractStream
@@ -298,7 +341,7 @@ function setup_streamers()
   Timer(t -> map(process,values(streamers)),1/60,1/60)
 end
 
-function get_streamers(::DefaultHooks)
+function get_streamers(::Hooks)
   if isempty(streamers)
     setup_streamers()
   end
@@ -320,7 +363,7 @@ function play_{R}(stream::AbstractStream{R},time::Float64=0.0,channel::Int=1)
     streamer = cur_streamers[channel]
 
     if time > 0
-      if streamer.done_at < time
+      if streamer.done_at < time && show_latency_warnings()
         offset = time - streamer.done_at
 
         cat_stream = [limit(streamer.stream,offset*s); stream]
@@ -330,10 +373,10 @@ function play_{R}(stream::AbstractStream{R},time::Float64=0.0,channel::Int=1)
       else
         warn("Requested timing of stream cannot be achieved. ",
              "With the current streaming settings you cannot request playback ",
-             "more than $(round(1000*unit_s,2))ms beforehand.",
-             moment_trace_string())
+             "more than $(round(1000*unit_s,2))ms beforehand.")
+        on_high_latency(sound_setup_state.hooks,streamer.done_at - time)
         cur_streamers[channel] = Streamer(tick(),channel,stream,Nullable(),
-                                        streamer.done_at + unit_s,-1)
+                                          streamer.done_at + unit_s,-1)
       end
     else
       cur_streamers[channel] = Streamer(tick(),channel,stream,Nullable(),
@@ -341,7 +384,7 @@ function play_{R}(stream::AbstractStream{R},time::Float64=0.0,channel::Int=1)
     end
   else
     cur_streamers[channel] = Streamer(tick(),channel,stream,Nullable(),
-                                      Weber.tick()+unit_s,time)
+                                      tick()+unit_s,time)
   end
 end
 
