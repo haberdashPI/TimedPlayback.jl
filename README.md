@@ -1,10 +1,9 @@
 # TimedPlayback
 
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip) [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://haberdashPI.github.io/TimedPlayback.jl/latest)
 <!-- [![Build status](https://ci.appveyor.com/api/projects/status/uvxq5mqlq0p2ap02/branch/master?svg=true)](https://ci.appveyor.com/project/haberdashPI/weber-jl/branch/master) -->
 <!-- [![TravisCI Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl) -->
 <!-- [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://haberdashPI.github.io/Weber.jl/stable) -->
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://haberdashPI.github.io/TimedPlayback.jl/latest)
 
 TimedPlayback provides a simple interface to create and play discrete sounds and continuous streams of sound. Unlike the existing solutions to [audio playback in julia](https://github.com/JuliaAudio), this library allows those sounds and streams to occur at relativley precise times:
 
@@ -45,6 +44,8 @@ to really make it an independent library.
 - [ ] [Fix caching bug](https://github.com/haberdashPI/Weber.jl/issues/72)
 - [ ] Implement `stop` for sounds in addition to streams
 - [ ] Fix latency warnings to work properly (clear warning buffer).
+- [ ] Fix bugs in streaming playback introduced by changes in Julia v0.6
+      (comes up when calling `stop` (maybe only when using `audible`??))
 
 Longer term goals:
 
