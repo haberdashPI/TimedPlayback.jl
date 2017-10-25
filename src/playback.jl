@@ -166,10 +166,10 @@ function setup_sound(;sample_rate=samplerate(),
     end
   end
   if samplerate() != sample_rate_Hz
-    warn(cleanstr("The sample rate is being changed from "*
-         "$(samplerate()) to $(sample_rate_Hz)"*
+    warn("The sample rate is being changed from "*
+         "$(samplerate()) to $(sample_rate_Hz). "*
          "Sounds you've created that do not share this new sample rate may "*
-         "not play correctly."))
+         "not play correctly.")
   end
 
   sound_setup_state.samplerate = sample_rate_Hz
