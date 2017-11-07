@@ -165,13 +165,7 @@ function setup_sound(;sample_rate=samplerate(),
       end
     end
   end
-  if samplerate() != sample_rate_Hz
-    warn("The sample rate is being changed from "*
-         "$(samplerate()) to $(sample_rate_Hz). "*
-         "Sounds you've created that do not share this new sample rate may "*
-         "not play correctly.")
-  end
-
+  
   sound_setup_state.samplerate = sample_rate_Hz
   sound_setup_state.state = ccall((:ws_setup,weber_sound),Ptr{Void},
                                   (Cint,Cint,Cint,),ustrip(sample_rate_Hz),
