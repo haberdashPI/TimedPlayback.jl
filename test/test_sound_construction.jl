@@ -1,4 +1,4 @@
-using TimedPlayback
+using TimedSound
 using Lazy: @>
 using Base.Test
 

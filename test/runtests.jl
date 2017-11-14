@@ -1,4 +1,4 @@
-using TimedPlayback
+using TimedSound
 using Base.Test
 
 include("test_sound_construction.jl")

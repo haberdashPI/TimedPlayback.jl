@@ -20,6 +20,7 @@ struct DefaultHooks <: Hooks end
 
 mutable struct SoundSetupState
   samplerate::Freq{Int}
+  cache::Bool
   playing::LRU{UInt,Sound}
   state::Ptr{Void}
   num_channels::Int
@@ -30,7 +31,7 @@ end
 
 const default_stream_unit = 2^12
 const sound_setup_state =
-    SoundSetupState(0Hz,LRU{UInt,Sound}(1),C_NULL,0,0,default_stream_unit,
+    SoundSetupState(0Hz,false,LRU{UInt,Sound}(1),C_NULL,0,0,default_stream_unit,
                     DefaultHooks())
 isready(s::SoundSetupState) = s.samplerate != 0Hz
 
@@ -81,8 +82,8 @@ end
 
 """
     setup_sound(;[sample_rate=samplerate()],[num_channels=8],[queue_size=8],
-                [stream_unit=2^11],
-                [hooks=TimedPlayback.DefaultHooks()
+                [stream_unit=2^11],[caching=false]
+                [hooks=TimedPlayback.DefaultHooks()])
 
 Initialize format and capacity of audio playback.
 
@@ -119,6 +120,13 @@ The stream unit determines the number of samples that are streamed at one time.
 If this value is too small for your hardware, streams will sound jumpy. However
 the latency of streams will increase as the stream unit increases.
 
+# Caching
+
+If you enable caching, by default, loading or converting the same object into a
+sound after the first time will result in the same sound object. You can always
+disable caching for a specific call to generate a sound (see documentation for
+[`sound`](@ref) and [`playable`](@ref)).
+
 # Playback Hooks
 
 There are a number of hooks into the playback mechanism
@@ -142,6 +150,7 @@ playback latency to be displayed. (Default is `false`)
 function setup_sound(;sample_rate=samplerate(),
                      buffer_size=nothing,queue_size=8,num_channels=8,
                      stream_unit=default_stream_unit,
+                     caching=false,
                      hooks=DefaultHooks())
   sound_setup_state.hooks = hooks
   sample_rate_Hz = inHz(Int,sample_rate)
@@ -165,8 +174,9 @@ function setup_sound(;sample_rate=samplerate(),
       end
     end
   end
-  
+
   sound_setup_state.samplerate = sample_rate_Hz
+  sound_setup_state.cache = caching
   sound_setup_state.state = ccall((:ws_setup,weber_sound),Ptr{Void},
                                   (Cint,Cint,Cint,),ustrip(sample_rate_Hz),
                                   num_channels,queue_size)
@@ -177,6 +187,14 @@ function setup_sound(;sample_rate=samplerate(),
   sound_setup_state.stream_unit = stream_unit
   ws_if_error("While trying to initialize sound")
 end
+
+"""
+    TimedPlayback.usecache()
+
+Reports the default state of caching. If true, then sounds will be cached when
+created through [`sound`](@ref) or [`playable`](@ref) by default.
+"""
+usecache() = sound_setup_state.cache
 
 """
     current_sound_latency()

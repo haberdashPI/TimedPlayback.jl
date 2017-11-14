@@ -1,14 +1,14 @@
-# TimedPlayback
+# TimedSound
 
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip) [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://haberdashPI.github.io/TimedPlayback.jl/latest)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip) [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://haberdashPI.github.io/TimedSound.jl/latest)
 <!-- [![Build status](https://ci.appveyor.com/api/projects/status/uvxq5mqlq0p2ap02/branch/master?svg=true)](https://ci.appveyor.com/project/haberdashPI/weber-jl/branch/master) -->
 <!-- [![TravisCI Status](https://travis-ci.org/haberdashPI/Weber.jl.svg?branch=master)](https://travis-ci.org/haberdashPI/Weber.jl) -->
 <!-- [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://haberdashPI.github.io/Weber.jl/stable) -->
 
-TimedPlayback provides a simple interface to create and play discrete sounds and continuous streams of sound. Unlike the existing solutions to [audio playback in julia](https://github.com/JuliaAudio), this library allows those sounds and streams to occur at relativley precise times:
+TimedSound provides a simple interface to create and play discrete sounds and continuous streams of sound. This library also differes from existing [audio playback solutions in julia](https://github.com/JuliaAudio) by allowing those sounds and streams to occur at relativley precise times:
 
 ```julia
-using TimedPlayback
+using TimedSound
 
 reference = at(1s) # 1 second from now
 
@@ -26,12 +26,13 @@ play(sound3,time=sound3_time)
 ```
 
 If the desired timing cannot be achieved, `play` will generate a warning. Note
-that there will always be a small amount of latency in audioplayback, due to
-specific audio drivers available on your machine and the physical delays present
-in your speakers. On a relatively modern windows machine I've recorded a playback jitter of ~5 ms using this library during an EEG experiment.
+that there will always be a small amount of unpredictable latency in
+audioplayback, due to your audio drivers and the physical delays present in your
+speakers. On a relatively modern windows machine I've recorded a playback jitter
+of ~5 ms using this library during an EEG experiment.
 
-See the [documentation](https://haberdashPI.github.io/TimedPlayback.jl/latest)
-for more details.
+See the [documentation](https://haberdashPI.github.io/TimedSound.jl/latest)
+for more details.w
 
 # Plans
 
@@ -39,6 +40,7 @@ There are few things that need to be cleaned up since moving this to
 a separate package from [Weber.jl](https://github.com/haberdashPI/Weber.jl)
 to really make it an independent library.
 
+- [ ] rename to TimedSound
 - [ ] Separate out the documentation from Weber.jl
 - [ ] CI testing and documentation-build setup
 - [ ] [Fix caching bug](https://github.com/haberdashPI/Weber.jl/issues/72)

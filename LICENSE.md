@@ -1,4 +1,4 @@
-The TimedPlayback.jl package is licensed under the MIT "Expat" License:
+The TimedSound.jl package is licensed under the MIT "Expat" License:
 
 > Copyright (c) 2017: David Little.
 > 
@@ -21,7 +21,7 @@ The TimedPlayback.jl package is licensed under the MIT "Expat" License:
 > SOFTWARE.
 > 
 
-Portions of PortAudio are included in TimedPlayback:
+Portions of PortAudio are included in TimedSound:
 
 > PortAudio Portable Real-Time Audio Library 
 > Copyright (c) 1999-2011 Ross Bencina and Phil Burk
@@ -32,7 +32,7 @@ Portions of PortAudio are included in TimedPlayback:
 > THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
 > IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Modified portions of SampledSignals.jl are included in TimedPlayback:
+Modified portions of SampledSignals.jl are included in TimedSound:
 
 > Copyright (c) 2015: Spencer Russell.
 

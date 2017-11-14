@@ -28,8 +28,7 @@ inHz{N <: Number}(typ::Type{N},x::N) = inHz(x)
 inHz{N <: Number}(typ::Type{N},x::Freq{N}) = inHz(x)
 function inHz(x::Number)
   warn("Unitless value, assuming Hz. Append Hz or kHz to avoid this warning",
-       " (e.g. tone(1kHz))",
-       reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
+       " (e.g. 1kHz instead of 1).")
   x*Hz
 end
 
@@ -40,7 +39,6 @@ inseconds(x::Number,R) = inseconds(x)
 inseconds(x::Quantity) = error("Expected second argument, specifying sample rate.")
 function inseconds(x::Number)
   warn("Unitless value, assuming seconds. Append s, ms or samples to avoid",
-       " this warning (e.g. 500ms)",
-       reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
+       " this warning (e.g. 500ms instead of 500)")
   x*s
 end

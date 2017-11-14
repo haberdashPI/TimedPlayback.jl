@@ -15,7 +15,7 @@ import Base: show, length, start, done, next, getindex, size,
 importall IntervalSets # I just need .., but there's a syntax parsing bug
 
 export sound, playable, duration, nchannels, nsamples, save, samplerate, length,
-  samples, vcat, leftright, similar, left, right,
+  samples, vcat, leftright, similar, left, right, resample,
   audiofn, limit, .., ends
 
 immutable Sound{R,T,N} <: AbstractArray{T,N}
@@ -36,8 +36,9 @@ immutable Sound{R,T,N} <: AbstractArray{T,N}
     end
   end
 end
-convert{R,T,N}(::Type{Sound{R,T,N}},x) = Sound{R,T,N}(convert(Array{T,N},x))
-function convert{R,T,S,N}(::Type{Sound{R,T,N}},x::Sound{R,S,N})
+convert(::Type{Sound{R,T,N}},x) where {R,T,N} =
+  Sound{R,T,N}(convert(Array{T,N},x))
+function convert(::Type{Sound{R,T,N}},x::Sound{R,S,N}) where {R,T,S,N}
   Sound{R,T,N}(convert(Array{T,N},x.data))
 end
 function convert{R,Q,T,S}(::Type{Sound{R,T}},x::Sound{Q,S})
@@ -69,12 +70,13 @@ asmono{R,T}(x::Sound{R,T,1}) = x.data
 asmono{R,T}(x::Sound{R,T,2}) = squeeze(x.data,2)
 
 vcat(xs::Sound...) = error("Sample rates differ, fix with `resample`.")
-function vcat{R}(xs::Sound{R}...)
+function vcat(xs::Sound{R}...) where R
   T = promote_type(map(eltype,xs)...)
   vcat((map(el -> convert(T,el),x) for x in xs)...)
 end
-vcat{R,T}(xs::Sound{R,T,1}...) = Sound{R,T,1}(vcat(map(x -> x.data,xs)...))
-function vcat{R,T}(xs::Sound{R,T}...)
+vcat(xs::Sound{R,T,1}...) where {R,T} =
+    Sound{R,T,1}(vcat(map(x -> x.data,xs)...))
+function vcat(xs::Sound{R,T}...) where {R,T}
   if any(x -> nchannels(x) == 2,xs)
     Sound{R,T,2}(vcat(map(asstereo,xs)...))
   else
@@ -97,7 +99,7 @@ end
 
 Get the duration of the given sound in seconds.
 """
-duration{R}(x::Sound{R}) = uconvert(s,nsamples(x) / (R*Hz))
+duration(x::Sound{R}) where R = uconvert(s,nsamples(x) / (R*Hz))
 
 """
     nchannels(sound)
@@ -118,7 +120,7 @@ Base.IndexStyle(::Type{Sound}) = IndexLinear()
 # adapted from:
 # https://github.com/JuliaAudio/SampledSignals.jl/blob/0a31806c3f7d382c9aa6db901a83e1edbfac62df/src/SampleBuf.jl#L109-L139
 rounded_time(x,R) = round(ustrip(inseconds(x,R)),ceil(Int,log(10,R)))*s
-function show{R}(io::IO, x::Sound{R})
+function show(io::IO, x::Sound{R}) where R
   seconds = rounded_time(duration(x),R)
   typ = if eltype(x) == Q0f15
     "16 bit PCM"
@@ -184,7 +186,7 @@ end
 
 Extract the left channel a stereo sound or stream.
 """
-function left{R,T,N}(sound::Sound{R,T,N})
+function left(sound::Sound{R,T,N}) where {R,T,N}
   if size(sound.data,2) == 1
     error("Expected stereo sound.")
   else
@@ -197,7 +199,7 @@ end
 
 Extract the right channel of a stereo sound or stream.
 """
-function right{R,T,N}(sound::Sound{R,T,N})
+function right(sound::Sound{R,T,N}) where {R,T,N}
   if size(sound.data,2) == 1
     error("Expected stereo sound.")
   else
@@ -244,16 +246,17 @@ end
 ########################################
 # getindex
 const Index = Union{Integer,Range,AbstractVector,Colon}
-@inline function getindex{R,T,I <: Index}(
-  x::Sound{R,T},ixs::ClosedIntervalEnd,js::I)
+@inline function getindex(x::Sound{R,T},
+                          ixs::ClosedIntervalEnd,js::I) where {R,T,I <: Index}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   @boundscheck checkbounds(x.data,from,js)
   @inbounds return Sound{R,T,2}(x.data[from:end,js])
 end
 
-@inline function getindex{R,T,I <: Index,N,TM <: Time}(
-  x::Sound{R,T,N},ixs::ClosedInterval{TM},js::I)
+@inline function
+    getindex(x::Sound{R,T,N},
+             ixs::ClosedInterval{TM},js::I) where {R,T,I <: Index,N,TM <: Time}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   to = insamples(maximum(ixs),R*Hz)-1
@@ -262,9 +265,7 @@ end
   return Sound{R,T,ndims(result)}(result)
 end
 
-@inline function getindex{R,T}(
-  x::Sound{R,T},ixs::ClosedIntervalEnd)
-
+@inline function getindex(x::Sound{R,T},ixs::ClosedIntervalEnd) where {R,T}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   if size(x,2) == 1
@@ -276,8 +277,8 @@ end
   end
 end
 
-@inline function getindex{R,T,TM <: Time}(
-  x::Sound{R,T},ixs::ClosedInterval{TM})
+@inline function getindex(x::Sound{R,T},
+                          ixs::ClosedInterval{TM}) where {R,T,TM <: Time}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   to = insamples(maximum(ixs),R*Hz)-1
@@ -330,8 +331,9 @@ end
 
 end
 
-@inline function setindex!{R,T,TM <: Time}(
-  x::Sound{R,T},vals::AbstractArray,ixs::ClosedInterval{TM})
+@inline function setindex!(
+    x::Sound{R,T},vals::AbstractArray,
+    ixs::ClosedInterval{TM}) where {R,T,TM <: Time}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   to = insamples(maximum(ixs),R*Hz)-1
@@ -345,7 +347,7 @@ end
   vals
 end
 
-function similar{R,T,S,N,M}(x::Sound{R,T,N},::Type{S},dims::NTuple{M,Int})
+function similar(x::Sound{R,T,N},::Type{S},dims::NTuple{M,Int}) where {R,T,S,N,M}
   if M ∉ [1,2] || (M == 2 && dims[2] ∉ [1,2])
     similar(x.data,S,dims)
   else
@@ -354,7 +356,7 @@ function similar{R,T,S,N,M}(x::Sound{R,T,N},::Type{S},dims::NTuple{M,Int})
 end
 
 save(file::Union{AbstractString,IO},sound::Sound) = save(file,assampled(sound))
-assampled{R}(x::Sound{R}) = SampledSignals.SampleBuf(x.data,float(R))
+assampled(x::Sound{R}) where R = SampledSignals.SampleBuf(x.data,float(R))
 
 """
     resample(x::Sound,samplerate)
@@ -370,14 +372,18 @@ To avoid automatic resampling you can either create sounds at the appropriate
 sampling rate, as determined by [`samplerate`](@ref) (recommended), or change
 the sampling rate initialized during [`setup_sound`](@ref) (not recommended).
 """
-function resample{R,T,N}(x::Sound{R,T,N},new_sample_rate)
+function resample(x::Sound{R,T,N},new_sample_rate) where {R,T,N}
   new_rate = floor(Int,ustrip(inHz(new_sample_rate)))
   if new_rate < R
     warn("The function `resample` reduced the sample rate, high freqeuncy",
-         " information above $(new_rate/2) Hz will be lost ",
-         reduce(*,"",map(x -> string(x)*"\n",stacktrace())))
+         " information above $(new_rate/2) Hz will be lost.")
   end
-  Sound{new_rate,T,N}(resample(x.data,new_rate // R))
+  if size(x,2) == 2
+    Sound{new_rate,T,N}(hcat(T.(resample(x.data[:,1],new_rate // R)),
+                             T.(resample(x.data[:,2],new_rate // R))))
+  else
+    Sound{new_rate,T,1}(T.(resample(x.data[:],new_rate // R)))
+  end
 end
 
 function duration(x::Array{Float64};sample_rate_Hz=samplerate())
@@ -394,7 +400,7 @@ function with_cache(fn,usecache,x,sr)
 end
 
 """
-    sound(x::Array,[cache=true];[sample_rate=samplerate()])
+    sound(x::Array,[cache=TimedSound.usecache()];[sample_rate=samplerate()])
 
 Creates a sound object from an arbitrary array.
 
@@ -410,8 +416,8 @@ creating a new sound for the same object.
     need not normally be called directly.
 
 """
-function sound{T <: Number,N}(x::Array{T,N},cache=true;
-                              sample_rate=samplerate())
+function sound(x::Array{T,N},cache=usecache();
+               sample_rate=samplerate()) where {T <: Number,N}
   if N ∉ [1,2]
     error("Array must have 1 or 2 dimensions to be converted to a sound.")
   end
@@ -422,7 +428,7 @@ function sound{T <: Number,N}(x::Array{T,N},cache=true;
   end
 end
 
-function sound(x::SampledSignals.SampleBuf,cache=true;
+function sound(x::SampledSignals.SampleBuf,cache=usecache();
                sample_rate=samplerate(x)*Hz)
   if ustrip(sample_rate) != samplerate(x)
     error("Unexpected sample rate $sample_rate. Use `playable` or `resample`",
@@ -435,7 +441,7 @@ function sound(x::SampledSignals.SampleBuf,cache=true;
   end
 end
 
-function sound{R}(x::Sound{R},cache=true;sample_rate=R*Hz)
+function sound(x::Sound{R},cache=usecache();sample_rate=R*Hz) where R
   if ustrip(sample_rate) != R
     error("Unexpected sample rate $sample_rate. Use `playable` or `resample`",
           " to change the sampling rate.")
@@ -444,7 +450,7 @@ function sound{R}(x::Sound{R},cache=true;sample_rate=R*Hz)
 end
 
 """
-    playable(x,[cache=true],[sample_rate=samplerate()])
+    playable(x,[cache=usecache()],[sample_rate=samplerate()])
 
 Prepare a sound or stream to be played.
 
@@ -457,13 +463,13 @@ appear to already be a sound or a stream.
     This need not be called explicitly, as play will call it for you, if need be.
 """
 
-function playable(x,cache=true,sample_rate=samplerate())
+function playable(x,cache=usecache(),sample_rate=samplerate())
   with_cache(cache,x,sample_rate) do
     playable(sound(x,sample_rate=sample_rate),false,sample_rate)
   end
 end
 
-function playable{R,T,N}(x::Sound{R,T,N},cache=true,sample_rate=samplerate())
+function playable{R,T,N}(x::Sound{R,T,N},cache=usecache(),sample_rate=samplerate())
   with_cache(cache,x,sample_rate) do
     bounded = clamp.(x.data,typemin(Q0f15),typemax(Q0f15))
     T2 = Q0f15
@@ -471,7 +477,7 @@ function playable{R,T,N}(x::Sound{R,T,N},cache=true,sample_rate=samplerate())
   end
 end
 
-function playable{R}(x::Sound{R,Q0f15},cache=true,sample_rate=samplerate())
+function playable{R}(x::Sound{R,Q0f15},cache=usecache(),sample_rate=samplerate())
   if size(x.data,2) == 2
     if R == ustrip(sample_rate)
       x
@@ -495,12 +501,12 @@ function playable{R}(x::Sound{R,Q0f15},cache=true,sample_rate=samplerate())
 end
 
 """
-    sound(file,[cache=true];[sample_rate=samplerate(file)])
+    sound(file,[cache=usecache()];[sample_rate=samplerate(file)])
 
 Load a specified file as a sound.
 """
-sound(file::File,cache=true;keys...) = sound(load(file),cache;keys...)
-sound(file::String,cache=true;keys...) = sound(load(file),cache;keys...)
+sound(file::File,cache=usecache();keys...) = sound(load(file),cache;keys...)
+sound(file::String,cache=usecache();keys...) = sound(load(file),cache;keys...)
 function sound(stream::IOStream,cache=false;keys...)
   if cache
     error("Cannot cache a sound from an IOStream. Please use the filename.")
@@ -516,7 +522,7 @@ Create a stereo sound from two vectors or two monaural sounds.
 For vectors, one can specify a sample_rate other than the default,
 if desired.
 """
-function leftright{R,T}(x::Sound{R,T},y::Sound{R,T},sample_rate=R*Hz)
+function leftright(x::Sound{R,T},y::Sound{R,T},sample_rate=R*Hz) where {R,T}
   if sample_rate != R*Hz
     error("Unexpected sampling rate $sample_rate. ",
           "Use `playable` or `resample` to change the sampling rate.")
@@ -529,9 +535,9 @@ function leftright{R,T}(x::Sound{R,T},y::Sound{R,T},sample_rate=R*Hz)
   end
 end
 
-limit{R}(sound::Sound{R},len::Time) = limit(sound,insamples(len,R*Hz))
-limit{R,T}(sound::Sound{R,T,1},len::Int) = sound[1:len]
-limit{R,T}(sound::Sound{R,T,2},len::Int) = sound[1:len,:]
+limit(sound::Sound{R},len::Time) where R = limit(sound,insamples(len,R*Hz))
+limit(sound::Sound{R,T,1},len::Int) where {R,T} = sound[1:len]
+limit(sound::Sound{R,T,2},len::Int) where {R,T} = sound[1:len,:]
 
 """
     audiofn(fn,x)
@@ -540,9 +546,9 @@ Apply `fn` to x for both sounds and streams.
 
 For a sound this is the same as calling `fn(x)`.
 """
-audiofn{R}(fn::Function,x::Sound{R}) = sound(fn(x),sample_rate=R*Hz)
+audiofn(fn::Function,x::Sound{R}) where R = sound(fn(x),sample_rate=R*Hz)
 
-function soundop{R}(op,xs::Union{Sound{R},Array}...)
+function soundop(op,xs::Union{Sound{R},Array}...) where R
   len = maximum(map(x -> size(x,1),xs))
   channels = maximum(map(x -> size(x,2),xs))
   y = similar(xs[1],(len,channels))

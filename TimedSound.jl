@@ -1,6 +1,6 @@
 __precompile__()
 
-module TimedPlayback
+module TimedSound
 
 using Lazy: @>, @_
 using Unitful
@@ -11,8 +11,8 @@ depsjl = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
 if isfile(depsjl)
   include(depsjl)
 else
-  error("TimedPlayback not properly installed. "*
-        "Please run\nPkg.build(\"TimedPlayback\")")
+  error("TimedSound not properly installed. "*
+        "Please run\nPkg.build(\"TimedSound\")")
 end
 
 const sound_is_setup = Array{Bool}()
