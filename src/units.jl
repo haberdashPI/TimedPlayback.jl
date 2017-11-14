@@ -31,7 +31,7 @@ function inHz(x::Number)
   x*Hz
 end
 
-inseconds{N}(x::SampleQuant{N},R) = (ustrip(x) / R)*s
+inseconds(x::SampleQuant{N},R) where N = (ustrip(x) / R)*s
 inseconds(x::Time) = uconvert(s,x)
 inseconds(x::Quantity,R) = uconvert(s,x)
 inseconds(x::Number,R) = inseconds(x)

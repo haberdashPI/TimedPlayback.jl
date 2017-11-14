@@ -212,7 +212,7 @@ end
 const ends = EndSecs()
 
 immutable ClosedIntervalEnd{N}
-  from::Time{N}
+  from::Quantity{N}
 end
 minimum(x::ClosedIntervalEnd) = x.from
 
@@ -256,7 +256,7 @@ end
 
 @inline function
     getindex(x::Sound{R,T,N},
-             ixs::ClosedInterval{TM},js::I) where {R,T,I <: Index,N,TM <: Time}
+             ixs::ClosedInterval{TM},js::I) where {R,T,I <: Index,N,TM <: Quantity}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   to = insamples(maximum(ixs),R*Hz)-1
@@ -278,7 +278,7 @@ end
 end
 
 @inline function getindex(x::Sound{R,T},
-                          ixs::ClosedInterval{TM}) where {R,T,TM <: Time}
+                          ixs::ClosedInterval{TM}) where {R,T,TM <: Quantity}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   to = insamples(maximum(ixs),R*Hz)-1
