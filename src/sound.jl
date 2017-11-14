@@ -252,7 +252,6 @@ const Index = Union{Integer,Range,AbstractVector,Colon}
                           ixs::ClosedIntervalEnd,js::I) where {R,T,I <: Index}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
-  @show from
   @boundscheck checkbounds(x.data,from,js)
   @inbounds return Sound{R,T,2}(x.data[from:end,js])
 end
@@ -263,7 +262,6 @@ end
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   to = insamples(maximum(ixs),R*Hz)-1
-  @show from,to
   @boundscheck checkbounds(x.data,from:to,js)
   @inbounds result = x.data[from:to,js]
   return Sound{R,T,ndims(result)}(result)
