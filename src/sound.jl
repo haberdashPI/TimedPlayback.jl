@@ -219,7 +219,7 @@ minimum(x::ClosedIntervalEnd) = x.from
 ..(x::Time,::EndSecs) = ClosedIntervalEnd(x)
 
 function checktime(time)
-  if time < 0s
+  if ustrip(time) < 0
     throw(BoundsError("Unexpected negative time."))
   end
 end
@@ -305,8 +305,9 @@ end
   vals
 end
 
-@inline function setindex!{R,T,I,TM <: Time}(
-  x::Sound{R,T},vals::AbstractArray,ixs::ClosedInterval{TM},js::I)
+@inline function setindex!(
+  x::Sound{R,T},vals::AbstractArray,
+  ixs::ClosedInterval{TM},js::I) where {R,T,I,TM <: Quantity}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   to = insamples(maximum(ixs),R*Hz)-1
@@ -333,7 +334,7 @@ end
 
 @inline function setindex!(
     x::Sound{R,T},vals::AbstractArray,
-    ixs::ClosedInterval{TM}) where {R,T,TM <: Time}
+    ixs::ClosedInterval{TM}) where {R,T,TM <: Quantity}
   @boundscheck checktime(minimum(ixs))
   from = max(1,insamples(minimum(ixs),R*Hz))
   to = insamples(maximum(ixs),R*Hz)-1
