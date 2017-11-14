@@ -217,6 +217,8 @@ end
 minimum(x::ClosedIntervalEnd) = x.from
 
 ..(x::Time,::EndSecs) = ClosedIntervalEnd(x)
+..(x::SampleQuant,::EndSecs) = ClosedIntervalEnd(x)
+..(x,::EndSecs) = error("Unexpected quantity $x in interval.")
 
 function checktime(time)
   if ustrip(time) < 0
