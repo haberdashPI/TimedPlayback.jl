@@ -27,6 +27,19 @@ Sampled at 44100 Hz
   @test (newx[0.5s .. ends,:] = x[0.1s .. myend,:]) == x[0.1s .. myend,:]
   @test (newx[0.1s .. 0.6s,:] = x[0.2s .. 0.700005s,:]) == x[0.2s .. 0.700005s,:]
 
+  @test x[0s .. 22050samples,:] == x[0s .. 0.5s,:]
+  @test x[22050samples .. 44100samples,:] == x[0.5s .. 1s,:]
+  @test x[22050samples .. 1s,:] == x[0.5s .. 1s,:]
+  @test x[22050samples .. ends,:] == x[0.5s .. ends,:]
+  @test x[0.5s .. 1s,:] == (x[0s .. 22051samples,:] = x[0.5s .. 1s,:])
+  @test x[0.5s .. ends,:] == (x[22050samples .. ends,:] = x[0.5s .. ends,:])
+
+  @test x[22050samples .. 44100samples] == x[0.5s .. 1s]
+  @test x[22050samples .. 1s] == x[0.5s .. 1s]
+  @test x[22050samples .. ends] == x[0.5s .. ends]
+  @test x[0.5s .. 1s] == (x[0s .. 22051samples] = x[0.5s .. 1s])
+  @test x[0.5s .. ends] == (x[22050samples .. ends] = x[0.5s .. ends])
+
   @test_throws BoundsError x[0.5s .. 2s,:]
   @test_throws BoundsError x[-0.5s .. 0.5s,:]
   @test_throws BoundsError x[-0.5s .. ends,:]

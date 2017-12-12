@@ -1,6 +1,6 @@
 using LRUCache
 export play, stream, stop, setup_sound, current_sound_latency, resume_sounds,
-  pause_sounds, tick
+  pause_sounds, tick, sound_is_setup, clear_sound_cache
 
 const weber_sound_version = 3
 
@@ -33,7 +33,7 @@ const default_stream_unit = 2^12
 const sound_setup_state =
     SoundSetupState(0Hz,false,LRU{UInt,Sound}(1),C_NULL,0,0,default_stream_unit,
                     DefaultHooks())
-isready(s::SoundSetupState) = s.samplerate != 0Hz
+sound_is_setup() = setup_sound_state.samplerate != 0Hz
 
 """
 With no argument samplerate reports the current playback sample rate, as
@@ -156,14 +156,13 @@ function setup_sound(;sample_rate=samplerate(),
   sample_rate_Hz = inHz(Int,sample_rate)
   empty!(sound_cache)
 
-  if isready(sound_setup_state)
+  if sound_is_setup()
     ccall((:ws_close,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
     ws_if_error("While closing old audio stream during setup")
     ccall((:ws_free,weber_sound),Void,(Ptr{Void},),sound_setup_state.state)
   else
-
-    if !sound_is_setup[]
-      sound_is_setup[] = true
+    if !sound_is_initialized[]
+      sound_is_initialized[] = true
       atexit() do
         sleep(0.1)
         ccall((:ws_close,weber_sound),Void,
@@ -187,6 +186,7 @@ function setup_sound(;sample_rate=samplerate(),
   sound_setup_state.stream_unit = stream_unit
   ws_if_error("While trying to initialize sound")
 end
+const sound_is_initialized = fill(false)
 
 """
     TimedPlayback.usecache()
@@ -195,6 +195,7 @@ Reports the default state of caching. If true, then sounds will be cached when
 created through [`sound`](@ref) or [`playable`](@ref) by default.
 """
 usecache() = sound_setup_state.cache
+clear_sound_cache() = empty!(sound_setup_state.cache)
 
 """
     current_sound_latency()
@@ -238,7 +239,7 @@ during sound generation using [`tone`](@ref), [`noise`](@ref),
 [`harmonic_complex`](@ref) or [`audible`](@ref).
 """
 function play(x;time=0.0s,channel=0)
-  if !isready(sound_setup_state)
+  if !sound_is_setup()
     setup_sound()
   end
 
@@ -454,7 +455,7 @@ Pause all sounds (or a stream) playing on a given channel.
 If no channel is specified, then all sounds are paused.
 """
 function pause_sounds(channel=-1,isstream=false)
-  if isready(sound_setup_state)
+  if sound_is_setup()
     @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
     ccall((:ws_pause,weber_sound),Void,(Ptr{Void},Cint,Cint,Cint),
           sound_setup_state.state,channel-1,isstream,true)
@@ -470,7 +471,7 @@ Resume all sounds (or a stream) playing on a given channel.
 If no channel is specified, then all sounds are resumed.
 """
 function resume_sounds(channel=-1,isstream=false)
-  if isready(sound_setup_state)
+  if sound_is_setup()
     @assert 1 <= channel <= sound_setup_state.num_channels || channel <= 0
     ccall((:ws_pause,weber_sound),Void,(Ptr{Void},Cint,Cint,Cint),
         sound_setup_state.state,channel-1,isstream,false)

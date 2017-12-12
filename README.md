@@ -32,7 +32,7 @@ speakers. On a relatively modern windows machine I've recorded a playback jitter
 of ~5 ms using this library during an EEG experiment.
 
 See the [documentation](https://haberdashPI.github.io/TimedSound.jl/latest)
-for more details.w
+for more details.
 
 # Plans
 
@@ -40,10 +40,10 @@ There are few things that need to be cleaned up since moving this to
 a separate package from [Weber.jl](https://github.com/haberdashPI/Weber.jl)
 to really make it an independent library.
 
-- [ ] rename to TimedSound
-- [ ] Separate out the documentation from Weber.jl
+- [x] Separate out the documentation from Weber.jl
+- [ ] document access to raw array
 - [ ] CI testing and documentation-build setup
-- [ ] [Fix caching bug](https://github.com/haberdashPI/Weber.jl/issues/72)
+- [x] [Fix caching bug](https://github.com/haberdashPI/Weber.jl/issues/72)
 - [ ] Implement `stop` for sounds in addition to streams
 - [ ] Fix latency warnings to work properly (clear warning buffer).
 - [ ] Fix bugs in streaming playback introduced by changes in Julia v0.6
