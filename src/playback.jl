@@ -33,7 +33,7 @@ const default_stream_unit = 2^12
 const sound_setup_state =
     SoundSetupState(0Hz,false,LRU{UInt,Sound}(1),C_NULL,0,0,default_stream_unit,
                     DefaultHooks())
-sound_is_setup() = setup_sound_state.samplerate != 0Hz
+sound_is_setup() = sound_setup_state.samplerate != 0Hz
 
 """
 With no argument samplerate reports the current playback sample rate, as
