@@ -394,6 +394,7 @@ function duration(x::Array{Float64};sample_rate_Hz=samplerate())
 end
 
 const sound_cache = LRU{Tuple{UInt,Int,Function},Sound}(256)
+clear_sound_cache() = empty!(sound_cache)
 function with_cache(fn,usecache,x,sr)
   if usecache
     get!(fn,sound_cache,(object_id(x),ustrip(inHz(Int,sr)),fn))

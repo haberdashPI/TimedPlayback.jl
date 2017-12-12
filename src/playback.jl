@@ -195,7 +195,6 @@ Reports the default state of caching. If true, then sounds will be cached when
 created through [`sound`](@ref) or [`playable`](@ref) by default.
 """
 usecache() = sound_setup_state.cache
-clear_sound_cache() = empty!(sound_setup_state.cache)
 
 """
     current_sound_latency()
