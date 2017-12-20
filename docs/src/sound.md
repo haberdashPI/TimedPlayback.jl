@@ -26,8 +26,8 @@ mix
 mult
 envelope
 duration
-nchannels(::Weber.Sound)
-nsamples(::Weber.Sound)
+nchannels(::TimedSound.Sound)
+nsamples(::TimedSound.Sound)
 audiofn
 leftright
 left
@@ -40,7 +40,7 @@ right
 play 
 setup_sound 
 playable
-DSP.Filters.resample(::Weber.Sound,::Any)
+DSP.Filters.resample(::TimedSound.Sound,::Any)
 stop
 samplerate
 current_sound_latency

@@ -16,7 +16,11 @@ importall IntervalSets # I just need .., but there's a syntax parsing bug
 
 export sound, playable, duration, nchannels, nsamples, save, samplerate, length,
   samples, vcat, leftright, similar, left, right, resample,
-  audiofn, limit, .., ends
+  audiofn, limit, .., ends, data
+
+function Base.Array(x::Sound{R,T,N}) where {R,T,N}
+  x.data
+end
 
 immutable Sound{R,T,N} <: AbstractArray{T,N}
   data::Array{T,N}

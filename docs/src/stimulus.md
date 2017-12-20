@@ -76,6 +76,14 @@ interval = [tone(400Hz,50ms); silence(100ms); tone(400Hz * 2^(5/12),50ms)]
 play(interval)
 ```
 
+### Sounds as normal arrays
+
+To represent a sound as a standard array (without copying any data), you may call the `Array` constructor.
+
+```julia
+a = Array(mysound)
+```
+
 ### Stereo Sounds
 
 You can create stereo sounds with [`leftright`](@ref), and reference the left and right channel using `:left` or `:right` as a second index, like so.
@@ -110,7 +118,7 @@ play(sound2,time=sound2_time)
 play(sound3,time=sound3_time)
 ```
 
-TimedSound will carefully track the actually time the sound was played and issue a warning if need be.
+TimedSound will carefully track the actual time the sound was played and issue a warning if need be.
 
 # Streams
 
