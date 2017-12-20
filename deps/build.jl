@@ -1,7 +1,7 @@
 downloaddir = joinpath(dirname(@__FILE__),"downloads")
 bindir = joinpath(dirname(@__FILE__),"usr","lib")
 
-const weber_sound_version = 3
+const weber_sound_version = 4
 
 # remove any old build files
 for d in [downloaddir,bindir]

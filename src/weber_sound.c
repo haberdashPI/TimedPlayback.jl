@@ -43,6 +43,7 @@ typedef struct{
   TimedSound** data;
   int len;
   int paused;
+  int stopped;
   int consumer_index;
   int producer_index;
   PaTime done_at;
@@ -139,7 +140,20 @@ static int ws_callback(const void* in,void* out,unsigned long len,
     Sounds* sounds = channels->data + c;
     TimedSound* sound;
     if(sounds->paused) continue;
+    if(sounds->stopped){
+      // free the stopped sounds if necessary
+      while((sound = sounds->data[sounds->consumer_index])){
+        free(sound);
 
+        old_index = sounds->consumer_index++;
+        if(sounds->consumer_index == sounds->len) sounds->consumer_index = 0;
+
+        sounds->data[old_index] = NULL;
+      }
+      // unstop the channel
+      sounds->stopped = FALSE;
+      continue;
+    }
     int zero_padding=0;
     outi=0;
     // if there's nothing to consume on this channel
@@ -384,6 +398,11 @@ void ws_pause(WsState* state,int channel,int isstream,int pause){
     state->channels->data[state->channels->len/2 + channel].paused = pause;
   else
     state->channels->data[channel].paused = pause;
+}
+
+EXPORT
+void ws_stop(WsState* state,int channel){
+  state->channels->data[channel].stopped = TRUE;
 }
 
 EXPORT

@@ -2,7 +2,7 @@ using LRUCache
 export play, stream, stop, setup_sound, current_sound_latency, resume_sounds,
   pause_sounds, tick, sound_is_setup, clear_sound_cache
 
-const weber_sound_version = 3
+const weber_sound_version = 4
 
 let
   version_in_file =
@@ -405,9 +405,14 @@ end
 
 Stop the stream that is playing on the given channel.
 """
-function stop(channel::Int)
+function stop(channel::Int,stream::Bool=false)
   @assert 1 <= channel <= sound_setup_state.num_channels
-  delete!(get_streamers(sound_setup_state.hooks),channel)
+  if stream
+    delete!(get_streamers(sound_setup_state.hooks),channel)
+  else
+    ccall((:ws_stop,weber_sound),Void,(Ptr{Void},Cint),
+          sound_setup_state.state,channel-1)
+  end
   nothing
 end
 

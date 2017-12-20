@@ -44,7 +44,7 @@ to really make it an independent library.
 - [ ] document access to raw array
 - [ ] CI testing and documentation-build setup
 - [x] [Fix caching bug](https://github.com/haberdashPI/Weber.jl/issues/72)
-- [ ] Implement `stop` for sounds in addition to streams
+- [x] Implement `stop` for sounds in addition to streams
 - [ ] Fix latency warnings to work properly (clear warning buffer).
 - [ ] Fix bugs in streaming playback introduced by changes in Julia v0.6
       (comes up when calling `stop` (maybe only when using `audible`??))
