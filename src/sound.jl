@@ -18,10 +18,6 @@ export sound, playable, duration, nchannels, nsamples, save, samplerate, length,
   samples, vcat, leftright, similar, left, right, resample,
   audiofn, limit, .., ends, data
 
-function Base.Array(x::Sound{R,T,N}) where {R,T,N}
-  x.data
-end
-
 immutable Sound{R,T,N} <: AbstractArray{T,N}
   data::Array{T,N}
   function Sound{R,T,N}(a::Array{T,N}) where {R,T,N}
@@ -48,6 +44,10 @@ end
 function convert{R,Q,T,S}(::Type{Sound{R,T}},x::Sound{Q,S})
   error("Cannot convert a sound with sampling rate $(Q*Hz) to a sound with ",
         "sampling rate $(R*Hz). Use `resample` to change the sampling rate.")
+end
+
+function Base.Array(x::Sound{R,T,N}) where {R,T,N}
+  x.data
 end
 
 """
